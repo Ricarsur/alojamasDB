@@ -48,3 +48,50 @@ export const createUser = async (req: Request, res: Response) => {
     }
   }
 };
+
+export const getUser = async (_req: Request, res: Response) => {
+    try {
+      const query = `
+        SELECT *
+        FROM users;
+      `;
+  
+      const result = await pool.query(query);
+      res.json(result.rows);
+  
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        res.status(500).json({ message: "Error al obtener los usuarios", details: error.message });
+      } else {
+        res.status(500).json({ message: "Error al obtener los usuarios", details: "Unknown error" });
+      }
+    }
+  };
+
+  export const deleteUser = async (req: Request, res: Response): Promise<void> => {
+    const { cc } = req.params;
+  
+    try {
+      const query = `
+        DELETE FROM users
+        WHERE cc = $1
+        RETURNING cc;
+      `;
+  
+      const result = await pool.query(query, [cc]);
+  
+      if (result.rowCount === 0) {
+         res.status(404).json({ message: "Usuario no encontrado" });
+         return;
+      }
+  
+      res.json({ message: "Usuario eliminado correctamente", deletedCC: result.rows[0].cc });
+  
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        res.status(500).json({ message: "Error al eliminar el usuario", details: error.message });
+      } else {
+        res.status(500).json({ message: "Error al eliminar el usuario", details: "Unknown error" });
+      }
+    }
+  };
